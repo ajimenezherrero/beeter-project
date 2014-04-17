@@ -183,6 +183,64 @@ public class StingResource {
 		return "select s.*, u.name from stings s, users u where u.username=s.username and s.stingid=?";
 	}
 
+	@GET
+	@Path("/search")
+	@Produces(MediaType.BEETER_API_STING_COLLECTION)
+	public StingCollection getSting(@QueryParam("length") int length,
+			@QueryParam("subject") String subject,
+			@QueryParam("content") String content) {
+		StingCollection stings = new StingCollection();
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+		} catch (SQLException e) {
+			throw new ServerErrorException("Could not connect to the database",
+					Response.Status.SERVICE_UNAVAILABLE);
+		}
+
+		PreparedStatement stmt = null;
+		try {
+			boolean boolsubject = subject != null;
+			boolean boolcontent = content != null;
+			stmt = conn.prepareStatement(buildGetStingBySerachQuery());
+			if (boolsubject) {
+				stmt.setString(1, "%" + subject + "%");
+			}else{
+				stmt.setString(1, "%%");
+			}
+			if (boolcontent) {
+				stmt.setString(2, "%" + content + "%");
+			}else{
+				stmt.setString(2, "%%");
+			}
+			length = (length <= 0) ? 5 : length;
+			stmt.setInt(3, length);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Sting sting = new Sting();
+				sting.setContent(rs.getString("content"));
+				sting.setSubject(rs.getString("subject"));
+				stings.addSting(sting);
+			}
+		} catch (SQLException e) {
+			throw new ServerErrorException(e.getMessage(),
+					Response.Status.INTERNAL_SERVER_ERROR);
+		} finally {
+			try {
+				if (stmt != null)
+					stmt.close();
+				conn.close();
+			} catch (SQLException e) {
+			}
+		}
+
+		return stings;
+	}
+
+	private String buildGetStingBySerachQuery() {
+			return "SELECT * FROM stings WHERE subject LIKE ? and content LIKE ? order by stingid desc limit ?";
+	}
+
 	@POST
 	@Consumes(MediaType.BEETER_API_STING)
 	@Produces(MediaType.BEETER_API_STING)
