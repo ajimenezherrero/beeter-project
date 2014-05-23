@@ -62,7 +62,7 @@ public class StingResource {
 					stmt.setTimestamp(1, new Timestamp(before));
 				else
 					stmt.setTimestamp(1, null);
-				length = (length <= 0) ? 5 : length;
+				length = (length <= 0) ? 20 : length;
 				stmt.setInt(2, length);
 			}
 			ResultSet rs = stmt.executeQuery();
@@ -213,7 +213,7 @@ public class StingResource {
 			}else{
 				stmt.setString(2, "%%");
 			}
-			length = (length <= 0) ? 5 : length;
+			length = (length <= 0) ? 20 : length;
 			stmt.setInt(3, length);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
